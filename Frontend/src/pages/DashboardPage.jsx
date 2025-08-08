@@ -18,7 +18,7 @@ export default function DashboardPage() {
 
   const fetchForms = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/forms')
+      const response = await axios.get('https://formbuilder-td9t.onrender.com/api/forms')
       console.log('Fetched forms:', response.data)
       setForms(response.data)
     } catch (error) {
@@ -37,11 +37,11 @@ export default function DashboardPage() {
   const togglePublishStatus = async (formId, currentStatus) => {
     try {
       // First get the form data
-      const formResponse = await axios.get(`http://localhost:5000/api/forms/${formId}`)
+      const formResponse = await axios.get(`https://formbuilder-td9t.onrender.com/api/forms/${formId}`)
       const formData = formResponse.data
       
       // Update the published status
-      await axios.put(`http://localhost:5000/api/forms/${formId}`, {
+      await axios.put(`https://formbuilder-td9t.onrender.com/api/forms/${formId}`, {
         ...formData,
         isPublished: !currentStatus
       })

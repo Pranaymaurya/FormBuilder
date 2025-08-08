@@ -18,8 +18,8 @@ export default function ResponsesPage() {
   const fetchFormAndResponses = async () => {
     try {
       const [formResponse, responsesResponse] = await Promise.all([
-        axios.get(`http://localhost:5000/api/forms/${id}`),
-        axios.get(`http://localhost:5000/api/forms/${id}/responses`)
+        axios.get(`https://formbuilder-td9t.onrender.com/api/forms/${id}`),
+        axios.get(`https://formbuilder-td9t.onrender.com/api/forms/${id}/responses`)
       ])
       
       setForm(formResponse.data)

@@ -23,7 +23,7 @@ export default function FillFormPage() {
 
   const fetchForm = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/forms/${id}/public`)
+      const response = await axios.get(`https://formbuilder-td9t.onrender.com/api/forms/${id}/public`)
       setForm(response.data)
     } catch (error) {
       console.error("Error fetching form:", error)
@@ -69,7 +69,7 @@ export default function FillFormPage() {
 
     setSubmitting(true)
     try {
-      await axios.post(`http://localhost:5000/api/forms/${id}/responses`, { answers })
+      await axios.post(`https://formbuilder-td9t.onrender.com/api/forms/${id}/responses`, { answers })
       setSubmitted(true)
     } catch (error) {
       alert("Error submitting form")

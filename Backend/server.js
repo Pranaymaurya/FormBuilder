@@ -10,14 +10,23 @@ const formRoutes = require('./routes/form')
 
 const app = express()
 
+// Trust proxy for accurate IP detection when behind load balancers/proxies
+app.set('trust proxy', 1)
+
 // Security middleware
 app.use(helmet())
 app.use(cors())
 
-// Rate limiting
+// Rate limiting configuration
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Use the X-Forwarded-For header when behind proxy
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress
+  }
 })
 app.use(limiter)
 

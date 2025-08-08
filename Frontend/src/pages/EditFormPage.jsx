@@ -32,7 +32,7 @@ export default function EditFormPage() {
 
   const fetchForm = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/forms/${id}`)
+      const response = await axios.get(`https://formbuilder-td9t.onrender.com/api/forms/${id}`)
       const formData = response.data
       setForm(formData)
       setFormTitle(formData.title)
@@ -107,7 +107,7 @@ export default function EditFormPage() {
 
     setSaving(true)
     try {
-      await axios.put(`http://localhost:5000/api/forms/${id}`, {
+      await axios.put(`https://formbuilder-td9t.onrender.com/api/forms/${id}`, {
         title: formTitle,
         description: formDescription,
         headerImage,
