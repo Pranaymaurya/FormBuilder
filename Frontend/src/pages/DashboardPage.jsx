@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Plus, Eye, Users, Calendar, LogOut } from 'lucide-react'
+import { FileText, Plus, Eye, Users, Calendar, LogOut, ExternalLink, Copy } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import axios from 'axios'
 
@@ -18,12 +18,39 @@ export default function DashboardPage() {
 
   const fetchForms = async () => {
     try {
-      const response = await axios.get('https://formbuilder-td9t.onrender.com/api/forms')
+      const response = await axios.get('http://localhost:5000/api/forms')
+      console.log('Fetched forms:', response.data)
       setForms(response.data)
     } catch (error) {
       console.error("Error fetching forms:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const copyShareLink = (formId) => {
+    const shareUrl = `${window.location.origin}/forms/${formId}/fill`
+    navigator.clipboard.writeText(shareUrl)
+    alert("Share link copied to clipboard!")
+  }
+
+  const togglePublishStatus = async (formId, currentStatus) => {
+    try {
+      // First get the form data
+      const formResponse = await axios.get(`http://localhost:5000/api/forms/${formId}`)
+      const formData = formResponse.data
+      
+      // Update the published status
+      await axios.put(`http://localhost:5000/api/forms/${formId}`, {
+        ...formData,
+        isPublished: !currentStatus
+      })
+      
+      // Refresh the forms list
+      fetchForms()
+    } catch (error) {
+      console.error('Error updating form status:', error)
+      alert('Failed to update form status')
     }
   }
 
@@ -94,9 +121,15 @@ export default function DashboardPage() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg">{form.title}</CardTitle>
-                    <Badge variant={form.isPublished ? "default" : "secondary"}>
-                      {form.isPublished ? "Published" : "Draft"}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <Badge 
+                        variant={form.isPublished ? "default" : "secondary"}
+                        className="cursor-pointer"
+                        onClick={() => togglePublishStatus(form._id, form.isPublished)}
+                      >
+                        {form.isPublished ? "Published" : "Draft"}
+                      </Badge>
+                    </div>
                   </div>
                   {form.description && (
                     <CardDescription>{form.description}</CardDescription>
@@ -113,6 +146,39 @@ export default function DashboardPage() {
                       {new Date(form.createdAt).toLocaleDateString()}
                     </div>
                   </div>
+                  
+                  {/* Share Link Section */}
+                  {form.isPublished && (
+                    <div className="mb-4 p-2 bg-green-50 rounded border border-green-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-green-700 font-medium">Form is live!</span>
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyShareLink(form._id)}
+                            className="h-6 px-2 text-green-700 hover:text-green-800"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                          <Link 
+                            to={`/forms/${form._id}/fill`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-green-700 hover:text-green-800"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex space-x-2">
                     <Link to={`/forms/${form._id}/edit`} className="flex-1">
                       <Button variant="outline" size="sm" className="w-full">

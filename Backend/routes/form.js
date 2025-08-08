@@ -1,6 +1,6 @@
 const express = require('express')
-const Form = require('../models/form')
-const Response = require('../models/response')
+const Form = require('../models/Form')
+const Response = require('../models/Response')
 const auth = require('../middleware/auth')
 
 const router = express.Router()
@@ -33,18 +33,21 @@ router.get('/', auth, async (req, res) => {
 // Create new form
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, description, headerImage, questions } = req.body
+    const { title, description, headerImage, questions, isPublished = false } = req.body
+
+    console.log('Creating form with data:', { title, description, isPublished, questionsCount: questions?.length })
 
     const form = new Form({
       title,
       description,
       headerImage,
-      questions,
+      questions: questions || [],
       createdBy: req.userId,
-      isPublished: false
+      isPublished: Boolean(isPublished)
     })
 
     await form.save()
+    console.log('Form created successfully:', form._id)
     res.status(201).json(form)
   } catch (error) {
     console.error('Create form error:', error)
@@ -71,14 +74,29 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-// Get public form (for filling)
+// Get public form (for filling) - FIXED VERSION
 router.get('/:id/public', async (req, res) => {
   try {
+    console.log('Fetching public form with ID:', req.params.id)
+    
     const form = await Form.findById(req.params.id)
       .select('title description headerImage questions isPublished')
 
-    if (!form || !form.isPublished) {
+    console.log('Found form:', form ? {
+      id: form._id,
+      title: form.title,
+      isPublished: form.isPublished,
+      questionsCount: form.questions?.length
+    } : 'null')
+
+    if (!form) {
+      console.log('Form not found in database')
       return res.status(404).json({ error: 'Form not found' })
+    }
+
+    if (!form.isPublished) {
+      console.log('Form exists but is not published')
+      return res.status(404).json({ error: 'Form not published' })
     }
 
     res.json(form)
@@ -93,9 +111,17 @@ router.put('/:id', auth, async (req, res) => {
   try {
     const { title, description, headerImage, questions, isPublished } = req.body
 
+    console.log('Updating form:', req.params.id, { title, isPublished })
+
     const form = await Form.findOneAndUpdate(
       { _id: req.params.id, createdBy: req.userId },
-      { title, description, headerImage, questions, isPublished },
+      { 
+        title, 
+        description, 
+        headerImage, 
+        questions: questions || [], 
+        isPublished: Boolean(isPublished) 
+      },
       { new: true }
     )
 
@@ -103,6 +129,7 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(404).json({ error: 'Form not found' })
     }
 
+    console.log('Form updated successfully')
     res.json(form)
   } catch (error) {
     console.error('Update form error:', error)
@@ -115,21 +142,61 @@ router.post('/:id/responses', async (req, res) => {
   try {
     const { answers } = req.body
 
+    console.log('Submitting response for form:', req.params.id)
+
     // Verify form exists and is published
     const form = await Form.findById(req.params.id)
-    if (!form || !form.isPublished) {
+    if (!form) {
+      console.log('Form not found for response submission')
       return res.status(404).json({ error: 'Form not found' })
+    }
+
+    if (!form.isPublished) {
+      console.log('Form not published for response submission')
+      return res.status(404).json({ error: 'Form not available' })
+    }
+
+    // Process answers
+    const processedAnswers = {}
+    
+    if (form.questions && form.questions.length > 0) {
+      form.questions.forEach(question => {
+        const answer = answers[question.id]
+        if (answer !== undefined && answer !== null) {
+          switch (question.type) {
+            case 'categorize':
+              processedAnswers[question.id] = typeof answer === 'object' ? answer : {}
+              break
+            case 'cloze':
+              processedAnswers[question.id] = Array.isArray(answer) ? answer : []
+              break
+            case 'comprehension':
+              processedAnswers[question.id] = typeof answer === 'object' ? answer : {}
+              break
+            case 'multiple-choice':
+              processedAnswers[question.id] = typeof answer === 'number' ? answer : parseInt(answer) || 0
+              break
+            default:
+              processedAnswers[question.id] = answer
+          }
+        }
+      })
     }
 
     const response = new Response({
       formId: req.params.id,
-      answers,
+      answers: processedAnswers,
       ipAddress: req.ip,
       userAgent: req.get('User-Agent')
     })
 
     await response.save()
-    res.json({ message: 'Response submitted successfully' })
+    console.log('Response saved successfully')
+    
+    res.json({ 
+      message: 'Response submitted successfully',
+      responseId: response._id 
+    })
   } catch (error) {
     console.error('Submit response error:', error)
     res.status(500).json({ error: 'Server error' })

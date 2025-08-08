@@ -6,6 +6,7 @@ import PropTypes from 'prop-types'
 export function CategorizeQuestion({ question, questionNumber, onAnswer }) {
   const [draggedItem, setDraggedItem] = useState(null)
   const [categorizedItems, setCategorizedItems] = useState({})
+  const [dragOverCategory, setDragOverCategory] = useState(null)
 
   const handleDragStart = (item) => {
     setDraggedItem(item)
@@ -13,6 +14,14 @@ export function CategorizeQuestion({ question, questionNumber, onAnswer }) {
 
   const handleDragOver = (e) => {
     e.preventDefault()
+  }
+
+  const handleDragEnter = (category) => {
+    setDragOverCategory(category)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverCategory(null)
   }
 
   const handleDrop = (e, category) => {
@@ -73,8 +82,14 @@ export function CategorizeQuestion({ question, questionNumber, onAnswer }) {
             {question.content.categories.map((category) => (
               <div
                 key={category}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[120px] hover:border-blue-400 transition-colors"
+                className={`border-2 border-dashed rounded-lg p-4 min-h-[120px] transition-colors ${
+                  dragOverCategory === category 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-300 hover:border-blue-400'
+                }`}
                 onDragOver={handleDragOver}
+                onDragEnter={() => handleDragEnter(category)}
+                onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, category)}
               >
                 <h4 className="font-medium mb-3">{category}</h4>
@@ -90,6 +105,9 @@ export function CategorizeQuestion({ question, questionNumber, onAnswer }) {
                       {item}
                     </Badge>
                   ))}
+                  {(!categorizedItems[category] || categorizedItems[category].length === 0) && (
+                    <span className="text-gray-400 text-sm italic">Drop items here</span>
+                  )}
                 </div>
               </div>
             ))}

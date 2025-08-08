@@ -23,7 +23,7 @@ export default function FillFormPage() {
 
   const fetchForm = async () => {
     try {
-      const response = await axios.get(`https://formbuilder-td9t.onrender.com/api/forms/${id}/public`)
+      const response = await axios.get(`http://localhost:5000/api/forms/${id}/public`)
       setForm(response.data)
     } catch (error) {
       console.error("Error fetching form:", error)
@@ -36,10 +36,40 @@ export default function FillFormPage() {
     setAnswers(prev => ({ ...prev, [questionId]: answer }))
   }
 
+  const validateForm = () => {
+    const unansweredQuestions = form.questions.filter(question => {
+      const answer = answers[question.id]
+      if (!answer) return true
+      
+      // Check if answer is empty based on question type
+      switch (question.type) {
+        case "categorize":
+          return Object.keys(answer).length === 0
+        case "cloze":
+          return answer.every(blank => blank === "")
+        case "comprehension":
+          return Object.keys(answer).length === 0
+        case "multiple-choice":
+          return answer === undefined || answer === null
+        default:
+          return true
+      }
+    })
+    
+    return unansweredQuestions.length === 0
+  }
+
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      const confirmSubmit = window.confirm(
+        "Some questions are not answered. Do you want to submit anyway?"
+      )
+      if (!confirmSubmit) return
+    }
+
     setSubmitting(true)
     try {
-      await axios.post(`https://formbuilder-td9t.onrender.com/api/forms/${id}/responses`, { answers })
+      await axios.post(`http://localhost:5000/api/forms/${id}/responses`, { answers })
       setSubmitted(true)
     } catch (error) {
       alert("Error submitting form")
@@ -67,6 +97,29 @@ export default function FillFormPage() {
       default:
         return null
     }
+  }
+
+  const getProgress = () => {
+    const totalQuestions = form.questions.length
+    const answeredQuestions = form.questions.filter(question => {
+      const answer = answers[question.id]
+      if (!answer) return false
+      
+      switch (question.type) {
+        case "categorize":
+          return Object.keys(answer).length > 0
+        case "cloze":
+          return answer.some(blank => blank !== "")
+        case "comprehension":
+          return Object.keys(answer).length > 0
+        case "multiple-choice":
+          return answer !== undefined && answer !== null
+        default:
+          return false
+      }
+    }).length
+    
+    return { answered: answeredQuestions, total: totalQuestions }
   }
 
   if (loading) {
@@ -107,6 +160,8 @@ export default function FillFormPage() {
     )
   }
 
+  const progress = getProgress()
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -125,6 +180,22 @@ export default function FillFormPage() {
             )}
           </CardHeader>
           <CardContent>
+            {/* Progress Bar */}
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-blue-900">Progress</span>
+                <span className="text-sm text-blue-700">
+                  {progress.answered} of {progress.total} questions answered
+                </span>
+              </div>
+              <div className="w-full bg-blue-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(progress.answered / progress.total) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+
             <div className="space-y-8">
               {form.questions.map((question, index) => renderQuestion(question, index))}
             </div>
@@ -138,6 +209,12 @@ export default function FillFormPage() {
               >
                 {submitting ? "Submitting..." : "Submit Form"}
               </Button>
+              <p className="text-sm text-gray-500 mt-2">
+                {progress.answered === progress.total 
+                  ? "All questions answered! Ready to submit." 
+                  : `${progress.total - progress.answered} questions remaining.`
+                }
+              </p>
             </div>
           </CardContent>
         </Card>

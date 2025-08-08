@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 import { ArrowLeft, Plus, Save, Eye } from 'lucide-react'
 import { QuestionPalette } from "@/components/QuestionPalette"
 import { QuestionEditor } from "@/components/QuestionEditor"
@@ -15,6 +16,7 @@ export default function CreateFormPage() {
   const [formTitle, setFormTitle] = useState("")
   const [formDescription, setFormDescription] = useState("")
   const [headerImage, setHeaderImage] = useState("")
+  const [isPublished, setIsPublished] = useState(true) // Default to published
   const [questions, setQuestions] = useState([])
   const [selectedQuestion, setSelectedQuestion] = useState(null)
   const [showPreview, setShowPreview] = useState(false)
@@ -80,15 +82,18 @@ export default function CreateFormPage() {
 
     setSaving(true)
     try {
-      const response = await axios.post('https://formbuilder-td9t.onrender.com/api/forms', {
+      const response = await axios.post('http://localhost:5000/api/forms', {
         title: formTitle,
         description: formDescription,
         headerImage,
-        questions
+        questions,
+        isPublished // Include published status
       })
 
+      console.log('Form created:', response.data)
       navigate(`/forms/${response.data._id}/edit`)
     } catch (error) {
+      console.error('Save form error:', error)
       alert("Failed to save form")
     } finally {
       setSaving(false)
@@ -170,6 +175,14 @@ export default function CreateFormPage() {
                     onChange={(e) => setHeaderImage(e.target.value)}
                     placeholder="https://example.com/image.jpg"
                   />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="published"
+                    checked={isPublished}
+                    onCheckedChange={setIsPublished}
+                  />
+                  <Label htmlFor="published">Publish immediately</Label>
                 </div>
               </CardContent>
             </Card>

@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token')
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-        const response = await axios.get('https://formbuilder-td9t.onrender.com/api/auth/me')
+        const response = await axios.get('http://localhost:5000/api/auth/me')
         setUser(response.data.user)
       }
     } catch (error) {
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('https://formbuilder-td9t.onrender.com/api/auth/login', {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
         email,
         password
       })
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (name, email, password) => {
     try {
-      const response = await axios.post('https://formbuilder-td9t.onrender.com/api/auth/signup', {
+      const response = await axios.post('http://localhost:5000/api/auth/signup', {
         name,
         email,
         password

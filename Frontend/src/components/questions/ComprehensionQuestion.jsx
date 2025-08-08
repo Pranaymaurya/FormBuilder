@@ -13,6 +13,13 @@ export function ComprehensionQuestion({ question, questionNumber, onAnswer }) {
     onAnswer(newAnswers)
   }
 
+  // Add progress indicator for comprehension questions
+  const getAnsweredCount = () => {
+    return Object.keys(answers).length
+  }
+
+  const totalQuestions = question.content.questions.length
+
   return (
     <Card>
       <CardHeader>
@@ -27,6 +34,22 @@ export function ComprehensionQuestion({ question, questionNumber, onAnswer }) {
             {question.content.passage.split('\n').map((paragraph, index) => (
               <p key={index} className="mb-3 last:mb-0">{paragraph}</p>
             ))}
+          </div>
+        </div>
+
+        {/* Progress Indicator */}
+        <div className="bg-blue-50 p-3 rounded-lg mb-4">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-blue-900">Question Progress</span>
+            <span className="text-sm text-blue-700">
+              {getAnsweredCount()} of {totalQuestions} answered
+            </span>
+          </div>
+          <div className="w-full bg-blue-200 rounded-full h-1 mt-2">
+            <div 
+              className="bg-blue-600 h-1 rounded-full transition-all duration-300"
+              style={{ width: `${(getAnsweredCount() / totalQuestions) * 100}%` }}
+            ></div>
           </div>
         </div>
 

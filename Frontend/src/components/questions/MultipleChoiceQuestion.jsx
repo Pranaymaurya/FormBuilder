@@ -22,9 +22,11 @@ export function MultipleChoiceQuestion({ question, questionNumber, onAnswer }) {
           <p className="text-lg">{question.content.question}</p>
           <RadioGroup value={selectedOption} onValueChange={handleAnswerChange}>
             {question.content.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
+              <div key={index} className={`flex items-center space-x-2 p-2 rounded transition-colors ${
+                selectedOption === index.toString() ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
+              }`}>
                 <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                <Label htmlFor={`option-${index}`} className="cursor-pointer flex-1">
                   {String.fromCharCode(65 + index)}. {option}
                 </Label>
               </div>
