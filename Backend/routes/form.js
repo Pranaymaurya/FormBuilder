@@ -1,6 +1,6 @@
 const express = require('express')
 const Form = require('../models/form')
-const Response = require('../models/Response')
+const Response = require('../models/response')
 const auth = require('../middleware/auth')
 
 const router = express.Router()
